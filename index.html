@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Courses</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Formulaire de Création de Course -->
+        <h2>Créer une Course</h2>
+        <form id="create-course-form">
+            <div class="mb-3">
+                <label for="course-name" class="form-label">Nom de la Course</label>
+                <input type="text" class="form-control" id="course-name" name="course-name" required>
+            </div>
+            <div class="mb-3">
+                <label for="course-description" class="form-label">Description</label>
+                <input type="text" class="form-control" id="course-description" name="course-description" required>
+            </div>
+            <div class="mb-3">
+                <label for="course-date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="course-date" name="course-date" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Créer Course</button>
+        </form>
+
+        <!-- Formulaire d'Ajout de Produit -->
+        <form id="ajoutProduitForm" class="hidden">
+            <h2>Ajout de Produit</h2>
+            <div class="mb-3">
+                <label for="product-name" class="form-label">Nom du Produit</label>
+                <input type="text" class="form-control" id="product-name" name="product-name" required>
+            </div>
+            <div class="mb-3">
+                <label for="product-price" class="form-label">Prix</label>
+                <input type="number" class="form-control" id="product-price" name="product-price" min="0" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label for="product-quantity" class="form-label">Quantité</label>
+                <input type="number" class="form-control" id="product-quantity" name="product-quantity" min="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ajouter Produit</button>
+        </form>
+
+        <h2>Produits pour <span id="selected-course-name">Course</span> - <span id="selected-date">Date</span></h2>
+        <div id="product-list"></div>
+        
+        <div id="courses-container">
+            <h2>Courses</h2>
+            <!-- Les courses seront affichées ici -->
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
