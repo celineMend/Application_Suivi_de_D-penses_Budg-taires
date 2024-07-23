@@ -56,15 +56,20 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Erreur lors de la récupération des produits.');
         } else {
             console.log('Produits récupérés:', data);
-            productList.innerHTML = '';
+            const productCardsContainer = document.getElementById('product-list');
+            productCardsContainer.innerHTML = ''; // Vider le conteneur avant d'ajouter les nouvelles cartes
+
             data.forEach(product => {
-                const productElement = document.createElement('div');
-                productElement.innerHTML = `
-                    <h3>${product.nom}</h3>
-                    <p>Prix: ${product.prix}</p>
-                    <p>Quantité: ${product.Quantite}</p>
+                const productCard = document.createElement('div');
+                productCard.classList.add('card', 'mb-3', 'col-sm-6');
+                productCard.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title">${product.nom}</h5>
+                        <p class="card-text">Prix: ${product.prix} €</p>
+                        <p class="card-text">Quantité: ${product.Quantite}</p>
+                    </div>
                 `;
-                productList.appendChild(productElement);
+                productCardsContainer.appendChild(productCard);
             });
         }
     }
@@ -83,16 +88,24 @@ document.addEventListener("DOMContentLoaded", function () {
             coursesContainer.innerHTML = '';
             data.forEach(course => {
                 const courseElement = document.createElement('div');
+                courseElement.classList.add('card', 'mb-3');
                 courseElement.innerHTML = `
-                    <h2>${course.nom}</h2>
-                    <p>${course.description}</p>
-                    <p>Date: ${new Date(course.date).toLocaleDateString()}</p>
-                    <button onclick="showAddProductForm('${course.id}', '${course.nom}', '${new Date(course.date).toLocaleDateString()}')">Ajouter Produit</button>
-                    <button onclick="fetchProducts('${course.id}')">Voir Produits</button>
+                    <div class="card-body">
+                        <h5 class="card-title">${course.nom}</h5>
+                        <p class="card-text">${course.description}</p>
+                        <p class="card-text">Date: ${new Date(course.date).toLocaleDateString()}</p>
+                        <button onclick="showAddProductForm('${course.id}', '${course.nom}', '${new Date(course.date).toLocaleDateString()}')" class="btn btn-primary">Ajouter Produit</button>
+                        <button onclick="redirectToProductsPage('${course.id}')" class="btn btn-secondary">Voir Produits</button>
+                    </div>
                 `;
                 coursesContainer.appendChild(courseElement);
             });
         }
+    }
+
+    // Fonction pour rediriger vers la page des produits
+    window.redirectToProductsPage = function(courseId) {
+        window.location.href = `products.html?courseId=${courseId}`;
     }
 
     // Afficher le formulaire d'ajout de produit pour une course spécifique

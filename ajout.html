@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter des Produits</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #B69991;
+        }
+        .navbar {
+            margin-bottom: 20px;
+            background-color: #E9E0D9; /* Couleur de fond */
+        }
+        .navbar-nav {
+            margin-left: auto; /* Aligner les éléments à droite */
+        }
+        .jumbotron {
+            background-image: url('https://i.pinimg.com/564x/6a/a3/bb/6aa3bb1d2d11104ed3671218279b3dbe.jpg'); /* Remplacez par l'URL de votre image */
+            background-size: cover;
+            background-position: center;
+            padding: 100px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        .form-container {
+            border-radius: 5px;
+            border-top-left-radius: 85px;
+            border-top-right-radius: 85px;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .form-control {
+            border: 2px solid #78433D; /* Bordure des inputs */
+            border-radius: 20px;
+        }
+        .form-control:focus {
+            border-color: #5c4033; /* Bordure des inputs au focus */
+            box-shadow: 0 0 0 0.2rem rgba(120, 67, 61, 0.25);
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-around;
+        }
+        .card {
+            border: 2px solid #78433D;
+            border-radius: 5px;
+        }
+        .card.completed {
+            border-color: #4CAF50; /* Bordure verte pour les produits achetés */
+        }
+        .card.not-completed {
+            border-color: #F44336; /* Bordure rouge pour les produits non achetés */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="#">Gestion des Produits</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Accueil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Ajouter Produit</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Bannière -->
+    <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+            <h1 class="display-4">Ajouter des Produits</h1>
+            <p class="lead">Gérez vos produits et suivez vos achats en toute simplicité.</p>
+        </div>
+    </div>
+
+    <div class="container mt-4 form-container">
+        <h2>Ajouter un Produit à <span id="course-name">Course</span> - <span id="course-date">Date</span></h2>
+
+        <!-- Formulaire d'Ajout de Produit -->
+        <form id="ajoutProduitForm">
+            <div class="mb-3">
+                <label for="product-name" class="form-label">Nom du Produit</label>
+                <input type="text" class="form-control" id="product-name" placeholder="Nom du produit" name="product-name" required>
+            </div>
+            <div class="mb-3">
+                <label for="product-price" class="form-label">Prix</label>
+                <input type="number" class="form-control" id="product-price" placeholder="Prix" name="product-price" min="0" step="0.01" required>
+            </div>
+            <div class="mb-3">
+                <label for="product-quantity" class="form-label">Quantité</label>
+                <input type="number" class="form-control" id="product-quantity" placeholder="Quantité"  name="product-quantity" min="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ajouter Produit</button>
+        </form>
+
+        <div class="mb-3">
+            <label for="filter" class="form-label">Filtrer les Produits</label>
+            <input type="text" class="form-control" id="filter" placeholder="Rechercher par nom...">
+        </div>
+
+        <h2>Produits ajoutés</h2>
+        <div id="product-list" class="card-container"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const supabaseUrl = 'https://kxjoxxencuxjhpdhbpkn.supabase.co'; // Remplacez par votre URL Supabase
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4am94eGVuY3V4amhwZGhicGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjEzMTg1NDIsImV4cCI6MjAzNjg5NDU0Mn0.gLAwFc4Lj3YZPqeBdrv9eN_96cOYrXVkq7r9rBdjmVk'; // Remplacez par votre clé Supabase
+            const database = supabase.createClient(supabaseUrl, supabaseKey);
+
+            const ajoutProduitForm = document.getElementById('ajoutProduitForm');
+            const productList = document.getElementById('product-list');
+            const filterInput = document.getElementById('filter');
+            const courseNameElement = document.getElementById('course-name');
+            const courseDateElement = document.getElementById('course-date');
+            addProductButton.addEventListener('click', function () {
+                localStorage.setItem('courseId', courseId);
+                localStorage.setItem('courseName', courseName);
+                localStorage.setItem('courseDate', courseDate);
+                window.location.href = 'ajoutProduit.html';
+            });
+
+            // Vérification des paramètres
+            if (!courseId || !courseName || !courseDate) {
+                console.error('Paramètres de la requête manquants.');
+                alert('Les paramètres nécessaires sont manquants.');
+                return;
+            }
+
+            courseNameElement.textContent = courseName;
+            courseDateElement.textContent = courseDate;
+
+            async function addProduct(nom, prix, quantite) {
+                const { data, error } = await database
+                    .from('produits')
+                    .insert([{ nom, prix, quantite, course_id: courseId }]);
+
+                if (error) {
+                    console.error('Erreur lors de l\'ajout du produit:', error.message);
+                    alert('Erreur lors de l\'ajout du produit.');
+                } else {
+                    alert('Produit ajouté avec succès!');
+                    fetchProducts();
+                }
+            }
+
+            async function fetchProducts(filter = '') {
+                const { data, error } = await database
+                    .from('produits')
+                    .select('*')
+                    .ilike('nom', `%${filter}%`)
+                    .eq('course_id', courseId);
+
+                if (error) {
+                    console.error('Erreur lors de la récupération des produits:', error.message);
+                } else {
+                    renderProducts(data);
+                }
+            }
+
+            function renderProducts(products) {
+                productList.innerHTML = '';
+                products.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'card ' + (product.completed ? 'completed' : 'not-completed');
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <h5 class="card-title">${product.nom}</h5>
+                            <p class="card-text">Prix: ${product.prix} €</p>
+                            <p class="card-text">Quantité: ${product.quantite}</p>
+                            <input type="checkbox" ${product.completed ? 'checked' : ''} onchange="updateProduct(${product.id}, this.checked)">
+                        </div>
+                    `;
+                    productList.appendChild(card);
+                });
+            }
+
+            async function updateProduct(id, completed) {
+                const { data, error } = await database
+                    .from('produits')
+                    .update({ completed })
+                    .eq('id', id);
+
+                if (error) {
+                    console.error('Erreur lors de la mise à jour du produit:', error.message);
+                }
+            }
+
+            ajoutProduitForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const nom = document.getElementById('product-name').value;
+                const prix = parseFloat(document.getElementById('product-price').value);
+                const quantite = parseInt(document.getElementById('product-quantity').value);
+
+                addProduct(nom, prix, quantite);
+                ajoutProduitForm.reset();
+            });
+
+            addProductButton.addEventListener('click', function () {
+                const url = `ajoutProduit.html?courseId=${courseId}&courseName=${courseName}&courseDate=${courseDate}`;
+                window.location.href = url;
+            });
+
+
+
+            filterInput.addEventListener('input', function () {
+                fetchProducts(filterInput.value);
+            });
+
+            fetchProducts();
+        });
+    </script>
+</body>
+</html>

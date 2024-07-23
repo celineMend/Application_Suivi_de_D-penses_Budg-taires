@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Courses</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color:  #B69991;
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            overflow-x: auto;
+        }
+        .card {
+            flex: 0 0 auto;
+            width: 300px;
+        }
+        .navbar {
+            margin-bottom: 20px;
+            background-color: #E9E0D9; /* Couleur de fond */
+        }
+        .navbar-nav {
+            margin-left: auto; /* Aligner les éléments à droite */
+        }
+        .jumbotron {
+            background-image: url('https://i.pinimg.com/564x/6a/a3/bb/6aa3bb1d2d11104ed3671218279b3dbe.jpg'); /* Remplacez par l'URL de votre image */
+            background-size: cover;
+            background-position: center;
+            padding: 100px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        .form-container {
+            /* border: 2px solid #78433D; Bordure de couleur spécifique */
+            border-radius: 5px;
+            padding: 20px;
+            border-top-left-radius: 85px;
+            border-top-right-radius: 85px;
+            background-color: #ffffff;
+        }
+        .form-control {
+            border: 2px solid #78433D; /* Bordure des inputs */
+            border-radius: 20px;
+            margin:10px;
+            padding: 10px;
+            
+        }
+         h2 {
+            text-align: center;
+        }
+        .form-control:focus {
+            border-color: #5c4033; /* Bordure des inputs au focus */
+            box-shadow: 0 0 0 0.2rem rgba(120, 67, 61, 0.25);
+        }
+        .card.green-border {
+            border: 2px solid green;
+        }
+        .card.red-border {
+            border: 2px solid red;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="#">Gestion des Courses</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Accueil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Ajouter Course</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Bannière -->
+    <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+            <h1 class="display-4">Bienvenue dans votre Gestionnaire des Courses</h1>
+            <p class="lead">Ajouter vos courses et gagner du temps pour faire vos achats.</p>
+        </div>
+    </div>
+
+    <div class="container mt-4 form-container">
+        <h2>Créer une Course</h2>
+        <form id="create-course-form">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="course-name" placeholder="Nom de la course" required>
+            </div>
+            <div class="mb-3">
+                <textarea class="form-control" id="course-description" placeholder="Description" required></textarea>
+            </div>
+            <div class="mb-3">
+                <input type="date" class="form-control" id="course-date" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Créer</button>
+        </form>
+    
+
+        <h2 class="mt-4">Filtrer par Date</h2>
+        <form id="filter-date-form">
+            <div class="mb-3">
+                <!-- <label for="filter-date" class="form-label">Date</label> -->
+                <input type="date" class="form-control" id="filter-date" name="filter-date">
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+        </form>
+
+        <div id="courses-container" class="mt-4">
+            <h2>Courses</h2>
+            <div class="card-container">
+                <!-- Les courses seront affichées ici -->
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const supabaseUrl = 'https://kxjoxxencuxjhpdhbpkn.supabase.co'; // Remplacez par votre URL Supabase
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4am94eGVuY3V4amhwZGhicGtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjEzMTg1NDIsImV4cCI6MjAzNjg5NDU0Mn0.gLAwFc4Lj3YZPqeBdrv9eN_96cOYrXVkq7r9rBdjmVk'; // Remplacez par votre clé Supabase
+        const database = supabase.createClient(supabaseUrl, supabaseKey);
+
+        const createCourseForm = document.getElementById('create-course-form');
+        const filterDateForm = document.getElementById('filter-date-form');
+        const cardContainer = document.querySelector('.card-container');
+
+        async function createCourse(nom, description, date) {
+            if (new Date(date) < new Date()) {
+                alert('La date ne peut pas être dans le passé.');
+                return;
+            }
+            const { data, error } = await database
+                .from('courses')
+                .insert([{ nom, description, date, completed: false }]);
+
+            if (error) {
+                console.error('Erreur lors de la création de la course:', error.message);
+                alert('Erreur lors de la création de la course.');
+            } else {
+                console.log('Course créée avec succès:', data);
+                alert('Course créée avec succès!');
+                fetchCourses();
+            }
+        }
+
+        async function updateCourse(id, fields) {
+            const { data, error } = await database
+                .from('courses')
+                .update(fields)
+                .match({ id });
+
+            if (error) {
+                console.error('Erreur lors de la mise à jour de la course:', error.message);
+                alert('Erreur lors de la mise à jour de la course.');
+            } else {
+                console.log('Course mise à jour avec succès:', data);
+                alert('Course mise à jour avec succès!');
+                fetchCourses();
+            }
+        }
+
+        async function deleteCourse(id) {
+            const { data, error } = await database
+                .from('courses')
+                .delete()
+                .match({ id });
+
+            if (error) {
+                console.error('Erreur lors de la suppression de la course:', error.message);
+                alert('Erreur lors de la suppression de la course.');
+            } else {
+                console.log('Course supprimée avec succès:', data);
+                alert('Course supprimée avec succès!');
+                fetchCourses();
+            }
+        }
+
+        async function fetchCourses(filterDate) {
+            let query = database.from('courses').select('*');
+            if (filterDate) {
+                query = query.eq('date', filterDate);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error('Erreur lors de la récupération des courses:', error.message);
+            } else {
+                console.log('Courses récupérées avec succès:', data);
+                cardContainer.innerHTML = '';
+
+                data.forEach(course => {
+                    const card = document.createElement('div');
+                    card.classList.add('card', course.completed ? 'green-border' : 'red-border');
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <h5 class="card-title">${course.nom}</h5>
+                            <p class="card-text">${course.description}</p>
+                            <p class="card-text">Date: ${course.date}</p>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="course-${course.id}" ${course.completed ? 'checked' : ''}>
+                                <label class="form-check-label" for="course-${course.id}">Course effectuée</label>
+                            </div>
+                            <button class="btn btn-secondary btn-add-product" data-id="${course.id}">Ajouter Produit</button>
+                            <button class="btn btn-primary btn-edit" data-id="${course.id}">Modifier</button>
+                            <button class="btn btn-danger btn-delete" data-id="${course.id}">Supprimer</button>
+                        </div>
+                    `;
+
+                    card.querySelector('.btn-edit').addEventListener('click', () => {
+                        const newName = prompt('Nouveau nom:', course.nom);
+                        const newDescription = prompt('Nouvelle description:', course.description);
+                        const newDate = prompt('Nouvelle date (AAAA-MM-JJ):', course.date);
+                        if (newName && newDescription && newDate) {
+                            updateCourse(course.id, { nom: newName, description: newDescription, date: newDate });
+                        }
+                    });
+
+                    card.querySelector('.btn-delete').addEventListener('click', () => {
+                        if (confirm('Voulez-vous vraiment supprimer cette course ?')) {
+                            deleteCourse(course.id);
+                        }
+                    });
+
+                    card.querySelector('.form-check-input').addEventListener('change', (event) => {
+                        const completed = event.target.checked;
+                        updateCourse(course.id, { completed }).then(() => {
+                            card.classList.toggle('green-border', completed);
+                            card.classList.toggle('red-border', !completed);
+                        });
+                    });
+
+                    card.querySelector('.btn-add-product').addEventListener('click', () => {
+                        window.location.href = `add_product.html?courseId=${course.id}`;
+                    });
+
+                    cardContainer.appendChild(card);
+                });
+            }
+        }
+
+        createCourseForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const nom = document.getElementById('course-name').value;
+            const description = document.getElementById('course-description').value;
+            const date = document.getElementById('course-date').value;
+            createCourse(nom, description, date);
+            createCourseForm.reset();
+        });
+
+        filterDateForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const filterDate = document.getElementById('filter-date').value;
+            fetchCourses(filterDate);
+        });
+
+        fetchCourses();
+    });
+</script>
